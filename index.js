@@ -1,27 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const Note = require('./models/note');
 const app = express();
-
-const password = process.argv[2];
-
-const url = `mongodb+srv://2045godnadvore:${password}@cluster0.dz12j79.mongodb.net/noteApp?retryWrites=true&w=majority`;
-
-mongoose.set('strictQuery', false);
-mongoose.connect(url);
-
-const noteSchema = new mongoose.Schema({
-  content: String,
-  important: Boolean
-});
-
-noteSchema.set('toJSON', {
-  transform: (document, returnedObject)  => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id;
-    delete returnedObject.__v;
-  }
-})
 
 const Note = mongoose.model('Note', noteSchema);
 
