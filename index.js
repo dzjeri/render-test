@@ -31,7 +31,7 @@ app.get('/api/notes', (request, response) => {
 
 app.get('/api/notes/:id', (request, response, next) => {
   const id = request.params.id;
-  
+
   Note.findById(id)
     .then(note => {
       if (note) response.json(note);
@@ -46,7 +46,7 @@ app.delete('/api/notes/:id', (request, response, next) => {
   Note.findByIdAndDelete(id)
     .then(result => response.status(204).end())
     .catch(error => next(error));
-})
+});
 
 app.put('/api/notes/:id', (request, response, next) => {
   const { content, important } = request.body;
@@ -77,7 +77,7 @@ app.post('/api/notes', (request, response, next) => {
   note.save()
     .then(savedNote => response.json(savedNote))
     .catch(error => next(error));
-})
+});
 
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' });
@@ -93,7 +93,7 @@ const errorHandler = (error, request, response, next) => {
   }
 
   next(error);
-}
+};
 
 app.use(unknownEndpoint);
 app.use(errorHandler);
