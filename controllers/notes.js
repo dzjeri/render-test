@@ -5,11 +5,13 @@ const User = require('../models/user');
 notesRouter.get('/', async (request, response) => {
   const notes = await Note
     .find({}).populate('user', { username: 1, name: 1 });
+
   response.json(notes);
 });
 
 notesRouter.get('/:id', async (request, response) => {
-  const note = await Note.findById(request.params.id);
+  const note = await Note
+    .findById(request.params.id).populate('user', { username: 1, name: 1 });
   if (note) {
     response.json(note);
   } else {
@@ -25,12 +27,15 @@ notesRouter.post('/', async (request, response) => {
   const note = new Note({
     content: body.content,
     important: body.important || false,
-    user: user.id
+    ...(user) && { user: user.id }
   });
 
   const savedNote = await note.save();
-  user.notes = user.notes.concat(savedNote._id);
-  await user.save();
+
+  if (user) {
+    user.notes = user.notes.concat(savedNote._id);
+    await user.save();
+  }
 
   response.status(201).json(savedNote);
 });
