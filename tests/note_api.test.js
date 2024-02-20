@@ -8,7 +8,7 @@ const api = supertest(app);
 const Note = require('../models/note');
 const User = require('../models/user');
 
-describe('when there is initially some notes saver', () => {
+describe('when there is initially some notes saved', () => {
   beforeEach(async () => {
     await Note.deleteMany({});
 
@@ -77,41 +77,41 @@ describe('when there is initially some notes saver', () => {
   });
 
   describe('addition of a new note', () => {
-    test('succeeds with valid data', async () => {
-      const newNote = {
-        content: 'async/await simplifies making async calls',
-        important: true
-      };
+    // test('succeeds with valid data', async () => {
+    //   const newNote = {
+    //     content: 'async/await simplifies making async calls',
+    //     important: true
+    //   };
 
-      await api
-        .post('/api/notes')
-        .send(newNote)
-        .expect(201)
-        .expect('Content-Type', /application\/json/);
+    //   await api
+    //     .post('/api/notes')
+    //     .send(newNote)
+    //     .expect(201)
+    //     .expect('Content-Type', /application\/json/);
 
-      const notesAtEnd = await helper.notesInDb();
-      expect(notesAtEnd).toHaveLength(helper.initialNotes.length + 1);
+    //   const notesAtEnd = await helper.notesInDb();
+    //   expect(notesAtEnd).toHaveLength(helper.initialNotes.length + 1);
 
-      const contents = notesAtEnd.map(n => n.content);
-      expect(contents).toContain(
-        'async/await simplifies making async calls'
-      );
-    });
+    //   const contents = notesAtEnd.map(n => n.content);
+    //   expect(contents).toContain(
+    //     'async/await simplifies making async calls'
+    //   );
+    // });
 
-    test('fails with status code 400 if data is invalid', async () => {
-      const newNote = {
-        important: true
-      };
+    //   test('fails with status code 400 if data is invalid', async () => {
+    //     const newNote = {
+    //       important: true
+    //     };
 
-      await api
-        .post('/api/notes')
-        .send(newNote)
-        .expect(400);
+    //     await api
+    //       .post('/api/notes')
+    //       .send(newNote)
+    //       .expect(400);
 
-      const notesAtEnd = await helper.notesInDb();
+    //     const notesAtEnd = await helper.notesInDb();
 
-      expect(notesAtEnd).toHaveLength(helper.initialNotes.length);
-    });
+  //     expect(notesAtEnd).toHaveLength(helper.initialNotes.length);
+  //   });
   });
 
   describe('deletion of a note', () => {
@@ -187,6 +187,54 @@ describe('when there is initially one user in db', () => {
 
     const usersAtEnd = await helper.usersInDb();
     expect(usersAtEnd).toEqual(usersAtStart);
+  });
+
+  describe('addition of a note', () => {
+    test('succeeds with valid data', async () => {
+      const response = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'secret' });
+      const token = response.body.token;
+
+      const newNote = {
+        content: 'This note was created by authorized root user',
+        important: true
+      };
+
+      const lengthBefore = (await helper.notesInDb()).length;
+
+      await api
+        .post('/api/notes')
+        .set('Authorization', `Bearer ${token}`)
+        .send(newNote)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
+
+      const notes = await helper.notesInDb();
+      expect(notes).toHaveLength(lengthBefore + 1);
+
+      const contents = notes.map(n => n.content);
+      expect(contents).toContain('This note was created by authorized root user');
+    });
+
+    test('fails if there is no content', async () => {
+      const loginResponse = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'secret' });
+      const token = loginResponse.body.token;
+
+      const faultyNote = {
+        important: true
+      };
+
+      const noteResponse = await api
+        .post('/api/notes')
+        .set('Authorization', `Bearer ${token}`)
+        .send(faultyNote)
+        .expect(400);
+      const error = noteResponse.body.error;
+      expect(error).toBe('Note validation failed: content: Path `content` is required.');
+    });
   });
 });
 
